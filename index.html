@@ -548,6 +548,8 @@
         (function() {
             const ZOMBIE_WALK_URL = 'https://fortport.ru/photo/60520';
             const ZOMBIE_EAT_URL = 'https://fortport.ru/photo/60654';
+            const CONE_ZOMBIE_WALK_URL = 'https://fortport.ru/photo/62569';
+            const CONE_ZOMBIE_EAT_URL = 'https://fortport.ru/photo/62568';
 
             const IMAGES = {
                 sunflower: 'https://fortport.ru/photo/59322',
@@ -556,6 +558,8 @@
                 peashooter_shoot: 'https://fortport.ru/photo/58745',
                 zombie: ZOMBIE_WALK_URL,
                 zombie_eat: ZOMBIE_EAT_URL,
+                cone_zombie: CONE_ZOMBIE_WALK_URL,
+                cone_zombie_eat: CONE_ZOMBIE_EAT_URL,
                 projectile: 'https://fortport.ru/photo/59350',
                 mower: 'https://fortport.ru/photo/62670',
                 sun: 'https://cdn-icons-png.flaticon.com/512/2720/2720081.png',
@@ -1026,15 +1030,32 @@
                     if (!this.gameRunning) return;
                     this.zombieCounter++;
                     const row = Math.floor(Math.random() * this.rows);
+                    const isConeZombie = Math.random() < 0.3;
                     const zombie = document.createElement('img');
-                    zombie.src = IMAGES.zombie;
+                    zombie.src = isConeZombie ? IMAGES.cone_zombie : IMAGES.zombie;
                     zombie.className = 'zombie';
                     const rowElement = document.querySelector(`.row[data-row="${row}"]`);
                     const rowWidth = rowElement.getBoundingClientRect().width;
                     zombie.style.left = `${rowWidth + 50}px`;
                     zombie.style.top = `${this.cellHeight / 2 - 57}px`;
                     rowElement.appendChild(zombie);
-                    const zombieObj = { id: Date.now() + Math.random(), row, x: rowWidth + 50, hp: 200, element: zombie, alive: true, speed: 0.7, eating: false, damageInterval: null, eatingPlantCol: -1 };
+                    const zombieObj = { 
+                        id: Date.now() + Math.random(), 
+                        row, 
+                        x: rowWidth + 50, 
+                        hp: isConeZombie ? 370 : 200, 
+                        maxHp: isConeZombie ? 370 : 200,
+                        element: zombie, 
+                        alive: true, 
+                        speed: 0.7, 
+                        eating: false, 
+                        damageInterval: null, 
+                        eatingPlantCol: -1,
+                        type: isConeZombie ? 'cone' : 'normal',
+                        coneHp: isConeZombie ? 370 : 0,
+                        coneMaxHp: isConeZombie ? 370 : 0,
+                        coneIntact: isConeZombie
+                    };
                     this.zombies.push(zombieObj);
                     this.moveZombie(zombieObj);
                 }
@@ -1053,7 +1074,7 @@
                                     if (!zombie.eating) {
                                         zombie.eating = true;
                                         zombie.eatingPlantCol = c;
-                                        zombie.element.src = IMAGES.zombie_eat;
+                                        zombie.element.src = zombie.type === 'cone' && zombie.coneIntact ? IMAGES.cone_zombie_eat : zombie.type === 'cone' ? IMAGES.zombie_eat : IMAGES.zombie_eat;
                                         this.startEating(zombie, c);
                                     }
                                     break;
@@ -1065,7 +1086,7 @@
                                 zombie.eating = false;
                                 zombie.eatingPlantCol = -1;
                                 if (zombie.damageInterval) clearInterval(zombie.damageInterval);
-                                zombie.element.src = IMAGES.zombie;
+                                zombie.element.src = zombie.type === 'cone' && zombie.coneIntact ? IMAGES.cone_zombie : IMAGES.zombie;
                             }
                             zombie.x -= zombie.speed;
                             zombie.element.style.left = `${zombie.x}px`;
@@ -1114,13 +1135,13 @@
                                 zombie.eating = false;
                                 zombie.eatingPlantCol = -1;
                                 clearInterval(zombie.damageInterval);
-                                zombie.element.src = IMAGES.zombie;
+                                zombie.element.src = zombie.type === 'cone' && zombie.coneIntact ? IMAGES.cone_zombie : IMAGES.zombie;
                             }
                         } else {
                             zombie.eating = false;
                             zombie.eatingPlantCol = -1;
                             clearInterval(zombie.damageInterval);
-                            zombie.element.src = IMAGES.zombie;
+                            zombie.element.src = zombie.type === 'cone' && zombie.coneIntact ? IMAGES.cone_zombie : IMAGES.zombie;
                         }
                     }, 1000);
                     this.intervals.push(zombie.damageInterval);
@@ -1191,7 +1212,15 @@
                             projectileObj.element.style.left = `${projectileObj.x}px`;
                             this.zombies.forEach(zombie => {
                                 if (zombie.row === row && zombie.alive && Math.abs(projectileObj.x - zombie.x) < 30) {
-                                    zombie.hp -= 20;
+                                    if (zombie.type === 'cone' && zombie.coneIntact) {
+                                        zombie.coneHp -= 20;
+                                        if (zombie.coneHp <= 0) {
+                                            zombie.coneIntact = false;
+                                            zombie.element.src = zombie.eating ? IMAGES.zombie_eat : IMAGES.zombie;
+                                        }
+                                    } else {
+                                        zombie.hp -= 20;
+                                    }
                                     projectileObj.active = false;
                                     projectileObj.element.remove();
                                     this.audioManager.playSound('hit');
