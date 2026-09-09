@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Plants vs Moderators</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #000000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            padding: 0;
+            position: fixed;
+            inset: 0;
+        }
+
+        .game-container {
+            width: 1280px;
+            height: 800px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: #5b8c4e;
+            margin: 0;
+            border: 4px solid #000000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+            transform-origin: center center;
+            transform: scale(var(--game-scale, 1));
+            flex-shrink: 0;
+        }
+
+        .splash-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 2000;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
+        }
+        .splash-screen.hidden {
+            opacity: 0;
+        }
+        .splash-logo {
+            width: 280px;
+            image-rendering: auto;
+        }
+
+        .menu-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 1000;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: none;
+        }
+        .menu-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transition: none;
+        }
+
+        .menu-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('фон.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.95;
+        }
+
+        .menu-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .start-btn {
+            width: 220px;
+            max-width: 220px;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            image-rendering: auto;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 0;
+            display: block;
+        }
+        .start-btn:hover {
+            transform: scale(1.05);
+        }
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        .music-toggle {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 3000;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            padding: 5px;
+            transition: transform 0.15s ease, background 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .music-toggle:hover {
+            transform: scale(1.1);
+            background: rgba(0,0,0,0.7);
+        }
+        .music-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .top-bar {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            height: 82px;
+            padding: 0;
+            background: linear-gradient(rgba(100, 35, 10, 0.18), rgba(55, 20, 5, 0.25)), #8b3f16;
+            border: 3px solid #321506;
+            border-bottom: 4px solid #281005;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -4px 8px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .top-bar::before {
+            content: "";
+            position: absolute;
+            inset: 3px;
+            pointer-events: none;
+            background: repeating-linear-gradient(8deg, transparent 0px, transparent 12px, rgba(45, 12, 2, 0.12) 13px, transparent 15px);
+            opacity: 0.7;
+        }
+
+        .sun-meter {
+            position: relative;
+            width: 74px;
+            height: 82px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 5px;
+            z-index: 2;
+        }
+
+        .sun-orb {
+            position: relative;
+            width: 58px;
+            height: 58px;
+            margin-top: -3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 45%, #fffde7 0%, #fff700 18%, #ffd000 40%, #e86b00 65%, #672000 100%);
+            border: 3px solid #3b1605;
+            box-shadow: inset 0 0 7px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.7);
+        }
+        .sun-orb::before {
+            content: "";
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 2px solid #bd7434;
+            box-shadow: inset 0 0 5px #000, 0 0 3px #000;
+        }
+        .sun-orb img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 1px #6b2c00) drop-shadow(0 0 3px #fff000);
+        }
+
+        .sun-count-wrapper {
+            position: absolute;
+            top: 61px;
+            left: 8px;
+            width: 55px;
+            height: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f5ead2;
+            border: 2px solid #4b2814;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 1px 2px rgba(0,0,0,0.7);
+        }
+        .sun-count-wrapper span {
+            font-family: Arial, sans-serif;
+            font-size: 17px;
+            font-weight: 900;
+            color: #25160c;
+            text-shadow: 0 1px #fff;
+        }
+
+        .seed-bank {
+            display: flex;
+            gap: 3px;
+            margin-left: 2px;
+            height: 76px;
+            z-index: 2;
+        }
+
+        .seed {
+            position: relative;
+            width: 50px;
+            height: 68px;
+            margin-top: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            cursor: pointer;
+            background: linear-gradient(135deg, #e9e0b5 0%, #cfc28b 50%, #a99a65 100%);
+            border: 2px solid #301a0c;
+            border-radius: 3px;
+            box-shadow: inset 1px 1px 0 rgba(255,255,255,0.65), inset -1px -1px 0 rgba(0,0,0,0.35), 0 2px 2px rgba(0,0,0,0.5);
+            transition: transform 0.12s, filter 0.12s;
+        }
+        .seed:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+        }
+        .seed.selected {
+            border: 3px solid #fff200;
+            box-shadow: 0 0 7px #fff200, inset 1px 1px 0 rgba(255,255,255,0.8);
+            transform: translateY(-2px);
+        }
+        .seed.disabled {
+            opacity: 0.48;
+            filter: grayscale(0.8);
+            pointer-events: none;
+        }
+        .seed-image {
+            width: 46px;
+            height: 51px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .seed img {
+            width: 43px;
+            height: 43px;
+            object-fit: contain;
+            display: block;
+        }
+        .seed .cost {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 17px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #eee4c3;
+            border-top: 1px solid #6b542d;
+            font-size: 12px;
+            line-height: 12px;
+            font-weight: 900;
+            color: #21150b;
+            text-shadow: 0 1px #fff;
+        }
+
+        .lawn-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .lawn {
+            display: grid;
+            grid-template-rows: repeat(5, 1fr);
+            gap: 0;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 0;
+            position: relative;
+            min-height: 0;
+        }
+
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            min-height: 0;
+            transition: filter 0.15s;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            aspect-ratio: 1;
+        }
+        .cell:hover {
+            filter: brightness(1.2);
+            z-index: 1;
+        }
+        .cell.occupied {
+            cursor: not-allowed;
+            filter: none;
+        }
+
+        .plant {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            position: absolute;
+            z-index: 5;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            transition: none;
+            image-rendering: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .plant.flash-white {
+            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+        }
+        .plant.sun-flash {
+            filter: brightness(1.8) drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            transition: filter 0.1s;
+        }
+        .plant.phase-2,
+        .plant.phase-3 {
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+        }
+
+        .zombie {
+            position: absolute;
+            width: 100px;
+            height: 115px;
+            object-fit: contain;
+            z-index: 7;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+            transition: none;
+            image-rendering: pixelated;
+        }
+        .zombie.flash-white {
+            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .projectile {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            z-index: 6;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            transition: none;
+        }
+
+        .mower {
+            position: absolute;
+            width: 70px;
+            height: 60px;
+            object-fit: contain;
+            z-index: 9;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+            left: -15px;
+            bottom: 5px;
+            transition: none;
+        }
+
+        .sun {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            z-index: 12;
+            cursor: pointer;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+            pointer-events: auto;
+            transition: transform 0.15s, opacity 0.5s ease;
+        }
+        .sun:hover {
+            transform: scale(1.15);
+        }
+
+        .ghost-plant {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.4;
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            transform: translate(-50%, -50%);
+        }
+
+        .particle {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            pointer-events: none;
+            z-index: 15;
+            animation: particleFade 0.8s ease-out forwards;
+        }
+        @keyframes particleFade {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
+        }
+        .sun-fade-in { animation: sunFadeIn 0.5s ease forwards; }
+        @keyframes sunFadeIn {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .sun-fade-out { animation: sunFadeOut 0.5s ease forwards; }
+        @keyframes sunFadeOut {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="music-toggle" id="musicToggle" title="Вкл/Выкл музыку">
+            <img id="musicIcon" src="yes.png" alt="Music On">
+        </div>
+        <div class="splash-screen" id="splashScreen">
+            <img class="splash-logo" src="хайп.png" alt="Студия">
+        </div>
+        <div class="menu-overlay" id="menuOverlay">
+            <div class="menu-bg"></div>
+            <div class="menu-content">
+                <img class="start-btn" src="start.png" alt="Старт" id="startBtn">
+            </div>
+        </div>
+        <div class="top-bar">
+            <div class="sun-meter">
+                <div class="sun-orb">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2720/2720081.png" alt="Солнце">
+                </div>
+                <div class="sun-count-wrapper">
+                    <span id="sunCount">150</span>
+                </div>
+            </div>
+            <div class="seed-bank">
+                <div class="seed" id="seedSunflower" title="Подсолнух - 50 солнц">
+                    <div class="seed-image"><img src="https://fortport.ru/photo/55463" alt="Подсолнух"></div>
+                    <span class="cost">50</span>
+                </div>
+                <div class="seed" id="seedPeashooter" title="Горохострел - 100 солнц">
+                    <div class="seed-image"><img src=https://fortport.ru/photo/55462" alt="Горохострел"></div>
+                    <span class="cost">100</span>
+                </div>
+                <div class="seed" id="seedEgg" title="Анонимное Яйцо - 50 солнц">
+                    <div class="seed-image"><img src="https://fortport.ru/photo/59640" alt="Яйцо"></div>
+                    <span class="cost">50</span>
+                </div>
+            </div>
+        </div>
+        <div class="lawn-container">
+            <div class="lawn" id="lawn"></div>
+        </div>
+    </div>
+    <img class="ghost-plant" id="ghostPlant" style="display: none;" alt="">
+
+    <script>
+        (function() {
+            const ZOMBIE_WALK_URL = 'https://fortport.ru/photo/60520';
+            const ZOMBIE_EAT_URL = 'https://fortport.ru/photo/60654';
+
+            const IMAGES = {
+                sunflower: 'https://fortport.ru/photo/59322',
+                peashooter: 'https://fortport.ru/photo/58667',
+                peashooter_fallback: 'https://fortport.ru/photo/55462',
+                peashooter_shoot: 'https://fortport.ru/photo/58745',
+                zombie: ZOMBIE_WALK_URL,
+                zombie_eat: ZOMBIE_EAT_URL,
+                projectile: 'https://fortport.ru/photo/59350',
+                mower: 'https://static.wikia.nocookie.net/plantsvs-zombies/images/1/18/Machine.png/revision/latest/scale-to-width-down/250?cb=20200506143358&path-prefix=ru',
+                sun: 'https://cdn-icons-png.flaticon.com/512/2720/2720081.png',
+                grass1: 'https://fortport.ru/images/1788874487006-918634190.webp',
+                grass2: 'https://fortport.ru/images/1788874487006-411570485.webp',
+                egg: 'https://fortport.ru/photo/59640',
+                egg_cracked: 'https://fortport.ru/photo/59639',
+                egg_broken: 'https://fortport.ru/photo/59638',
+                egg_dead: 'https://fortport.ru/photo/59641',
+                particle: 'https://fortport.ru/photo/59660'
+            };
+
+            const AUDIO_FILES = {
+                background: 'plants_vs_zombies_04 - Grasswalk.mp3',
+                sunPickup: 'plants-vs-zombies-sun-pickup.mp3',
+                seedPacket: 'plants-vs-zombies-seed-packet-sound.mp3',
+                planting: 'plants-vs-zombies-planting-sound.mp3',
+                hit: 'plants-vs-zombies-hit.mp3',
+                chomp: 'chomp.mp3',
+                chomp2: 'chomp2.mp3'
+            };
+
+            class AudioManager {
+                constructor() {
+                    this.sounds = {};
+                    this.backgroundMusic = null;
+                    this.menuMusic = null;
+                    this.musicEnabled = true;
+                    this.initAudio();
+                }
+                initAudio() {
+                    for (const [key, file] of Object.entries(AUDIO_FILES)) {
+                        const audio = new Audio(file);
+                        audio.preload = 'auto';
+                        this.sounds[key] = audio;
+                    }
+                    this.backgroundMusic = this.sounds.background;
+                    this.backgroundMusic.loop = true;
+                    this.backgroundMusic.volume = 0.3;
+                    this.menuMusic = new Audio('menu.mp3');
+                    this.menuMusic.loop = true;
+                    this.menuMusic.volume = 0.3;
+                }
+                toggleMusic() {
+                    this.musicEnabled = !this.musicEnabled;
+                    if (!this.musicEnabled) {
+                        this.menuMusic.pause();
+                        this.backgroundMusic.pause();
+                    } else {
+                        const menuOverlay = document.getElementById('menuOverlay');
+                        if (menuOverlay && !menuOverlay.classList.contains('hidden')) {
+                            this.playMenuMusic();
+                        } else {
+                            this.playBackground();
+                        }
+                    }
+                    return this.musicEnabled;
+                }
+                playMenuMusic() {
+                    if (!this.musicEnabled) return;
+                    this.menuMusic.currentTime = 0;
+                    this.menuMusic.play().catch(() => {});
+                }
+                stopMenuMusic() {
+                    this.menuMusic.pause();
+                    this.menuMusic.currentTime = 0;
+                }
+                playBackground() {
+                    if (!this.musicEnabled) return;
+                    this.backgroundMusic.currentTime = 0;
+                    this.backgroundMusic.play().catch(() => {});
+                }
+                stopBackground() {
+                    this.backgroundMusic.pause();
+                    this.backgroundMusic.currentTime = 0;
+                }
+                playSound(soundKey) {
+                    const sound = this.sounds[soundKey];
+                    if (sound) {
+                        sound.currentTime = 0;
+                        sound.play().catch(() => {});
+                    }
+                }
+                playChomp() {
+                    const sounds = [this.sounds.chomp, this.sounds.chomp2];
+                    const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+                    if (randomSound) {
+                        randomSound.currentTime = 0;
+                        randomSound.play().catch(() => {});
+                    }
+                }
+            }
+
+            class Game {
+                constructor() {
+                    this.sunCount = 150;
+                    this.selectedPlant = null;
+                    this.gameRunning = false;
+                    this.rows = 5;
+                    this.cols = 9;
+                    this.plants = [];
+                    this.zombies = [];
+                    this.projectiles = [];
+                    this.mowers = [];
+                    this.suns = [];
+                    this.intervals = [];
+                    this.timeouts = [];
+                    this.zombieCounter = 0;
+                    this.waveNumber = 1;
+                    this.audioManager = new AudioManager();
+                    this.ghostPlant = document.getElementById('ghostPlant');
+                    this.cellWidth = 0;
+                    this.cellHeight = 0;
+                    this.gameStartTime = 0;
+                    this.gameContainer = document.getElementById('gameContainer');
+
+                    this.adjustScale();
+                    window.addEventListener('resize', () => this.adjustScale());
+
+                    this.init();
+                    this.setupSplashAndMenu();
+                    this.setupMusicToggle();
+                }
+
+                adjustScale() {
+                    const containerWidth = 1280;
+                    const containerHeight = 800;
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const scaleX = viewportWidth / containerWidth;
+                    const scaleY = viewportHeight / containerHeight;
+                    const scale = Math.min(scaleX, scaleY);
+                    this.gameContainer.style.setProperty('--game-scale', scale);
+                }
+
+                setupMusicToggle() {
+                    const toggleBtn = document.getElementById('musicToggle');
+                    const icon = document.getElementById('musicIcon');
+                    toggleBtn.addEventListener('click', () => {
+                        const enabled = this.audioManager.toggleMusic();
+                        icon.src = enabled ? 'yes.png' : 'no.png';
+                    });
+                }
+
+                setupSplashAndMenu() {
+                    const splash = document.getElementById('splashScreen');
+                    const menu = document.getElementById('menuOverlay');
+                    const startBtn = document.getElementById('startBtn');
+
+                    splash.classList.remove('hidden');
+                    menu.classList.add('hidden');
+
+                    setTimeout(() => {
+                        splash.classList.add('hidden');
+                        menu.classList.remove('hidden');
+                        this.audioManager.playMenuMusic();
+                    }, 2000);
+
+                    startBtn.addEventListener('click', () => {
+                        this.audioManager.stopMenuMusic();
+                        menu.classList.add('hidden');
+                        this.startGame();
+                        this.audioManager.playBackground();
+                    });
+                }
+
+                init() {
+                    this.createLawn();
+                    this.createMowers();
+                    this.bindEvents();
+                    this.updateSunDisplay();
+                }
+
+                createLawn() {
+                    const lawn = document.getElementById('lawn');
+                    lawn.innerHTML = '';
+                    for (let r = 0; r < this.rows; r++) {
+                        this.plants[r] = [];
+                        const row = document.createElement('div');
+                        row.className = 'row';
+                        row.dataset.row = r;
+                        for (let c = 0; c < this.cols; c++) {
+                            const cell = document.createElement('div');
+                            cell.className = 'cell';
+                            cell.dataset.row = r;
+                            cell.dataset.col = c;
+                            cell.style.backgroundImage = `url('${((r + c) % 2 === 0) ? IMAGES.grass1 : IMAGES.grass2}')`;
+                            cell.addEventListener('click', (e) => this.onCellClick(e));
+                            row.appendChild(cell);
+                            this.plants[r][c] = null;
+                        }
+                        lawn.appendChild(row);
+                    }
+                    setTimeout(() => {
+                        const firstCell = document.querySelector('.cell');
+                        this.cellWidth = firstCell.getBoundingClientRect().width;
+                        this.cellHeight = firstCell.getBoundingClientRect().height;
+                    }, 100);
+                }
+
+                createMowers() {
+                    this.mowers = [];
+                    const rows = document.querySelectorAll('.row');
+                    rows.forEach((row, index) => {
+                        const mower = document.createElement('img');
+                        mower.src = IMAGES.mower;
+                        mower.className = 'mower';
+                        mower.style.left = '-15px';
+                        row.appendChild(mower);
+                        this.mowers.push({ row: index, element: mower, active: false, x: -15 });
+                    });
+                }
+
+                bindEvents() {
+                    document.getElementById('seedSunflower').addEventListener('click', () => this.togglePlantSelection('sunflower'));
+                    document.getElementById('seedPeashooter').addEventListener('click', () => this.togglePlantSelection('peashooter'));
+                    document.getElementById('seedEgg').addEventListener('click', () => this.togglePlantSelection('egg'));
+
+                    document.addEventListener('mousemove', (e) => {
+                        if (this.selectedPlant && this.gameRunning) {
+                            this.ghostPlant.style.display = 'block';
+                            this.ghostPlant.style.left = (e.clientX / this.getScale()) + 'px';
+                            this.ghostPlant.style.top = (e.clientY / this.getScale()) + 'px';
+                        } else {
+                            this.ghostPlant.style.display = 'none';
+                        }
+                    });
+
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') {
+                            this.selectedPlant = null;
+                            this.updateSeedButtons();
+                            this.ghostPlant.style.display = 'none';
+                        }
+                    });
+                }
+
+                getScale() {
+                    return parseFloat(this.gameContainer.style.getPropertyValue('--game-scale')) || 1;
+                }
+
+                togglePlantSelection(type) {
+                    if (!this.gameRunning) return;
+                    let cost = type === 'sunflower' ? 50 : type === 'peashooter' ? 100 : 50;
+                    if (this.sunCount < cost) return;
+
+                    if (this.selectedPlant === type) {
+                        this.selectedPlant = null;
+                        this.ghostPlant.style.display = 'none';
+                    } else {
+                        this.selectedPlant = type;
+                        this.ghostPlant.src = type === 'sunflower' ? IMAGES.sunflower : type === 'peashooter' ? IMAGES.peashooter : IMAGES.egg;
+                    }
+                    this.updateSeedButtons();
+                }
+
+                updateSeedButtons() {
+                    const sunSeed = document.getElementById('seedSunflower');
+                    const peaSeed = document.getElementById('seedPeashooter');
+                    const eggSeed = document.getElementById('seedEgg');
+                    sunSeed.classList.toggle('selected', this.selectedPlant === 'sunflower');
+                    peaSeed.classList.toggle('selected', this.selectedPlant === 'peashooter');
+                    eggSeed.classList.toggle('selected', this.selectedPlant === 'egg');
+                    sunSeed.classList.toggle('disabled', this.sunCount < 50);
+                    peaSeed.classList.toggle('disabled', this.sunCount < 100);
+                    eggSeed.classList.toggle('disabled', this.sunCount < 50);
+                }
+
+                onCellClick(e) {
+                    if (!this.gameRunning || !this.selectedPlant) return;
+                    const row = parseInt(e.target.dataset.row);
+                    const col = parseInt(e.target.dataset.col);
+                    if (this.plants[row][col]) return;
+
+                    let cost = this.selectedPlant === 'sunflower' ? 50 : this.selectedPlant === 'peashooter' ? 100 : 50;
+                    if (this.sunCount < cost) return;
+
+                    this.sunCount -= cost;
+                    this.updateSunDisplay();
+                    this.audioManager.playSound('planting');
+                    this.plantOnCell(row, col, this.selectedPlant);
+                    this.selectedPlant = null;
+                    this.ghostPlant.style.display = 'none';
+                    this.updateSeedButtons();
+                }
+
+                plantOnCell(row, col, type) {
+                    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                    const plant = document.createElement('img');
+                    let imgSrc;
+                    let plantData;
+
+                    if (type === 'sunflower') {
+                        imgSrc = IMAGES.sunflower;
+                        plantData = { type: 'sunflower', element: plant, lastShot: 0, lastSun: Date.now(), hp: 100, firstSunDelay: 5000 + Math.random() * 2000, firstSunDone: false, isShooting: false, row, col, isFlashing: false };
+                    } else if (type === 'peashooter') {
+                        imgSrc = IMAGES.peashooter;
+                        plant.onerror = function() { this.src = IMAGES.peashooter_fallback; };
+                        plantData = { type: 'peashooter', element: plant, lastShot: 0, lastSun: Date.now(), hp: 100, firstSunDelay: 0, firstSunDone: true, isShooting: false, row, col, originalSrc: imgSrc };
+                    } else if (type === 'egg') {
+                        imgSrc = IMAGES.egg;
+                        plantData = { type: 'egg', element: plant, lastShot: 0, lastSun: Date.now(), hp: 4000, maxHp: 4000, firstSunDelay: 0, firstSunDone: true, isShooting: false, phase: 1, row, col };
+                    }
+                    plant.src = imgSrc;
+                    plant.className = 'plant';
+                    cell.appendChild(plant);
+                    cell.classList.add('occupied');
+                    this.plants[row][col] = plantData;
+                }
+
+                updateEggPhase(plantData, row, col) {
+                    if (plantData.type !== 'egg') return;
+                    const ratio = plantData.hp / plantData.maxHp;
+                    let newPhase;
+                    if (plantData.hp <= 0) newPhase = 4;
+                    else if (ratio > 0.66) newPhase = 1;
+                    else if (ratio > 0.33) newPhase = 2;
+                    else newPhase = 3;
+
+                    if (newPhase !== plantData.phase) {
+                        plantData.phase = newPhase;
+                        const el = plantData.element;
+                        if (newPhase === 1) { el.src = IMAGES.egg; el.classList.remove('phase-2','phase-3'); }
+                        else if (newPhase === 2) { el.src = IMAGES.egg_cracked; el.classList.add('phase-2'); el.classList.remove('phase-3'); }
+                        else if (newPhase === 3) { el.src = IMAGES.egg_broken; el.classList.remove('phase-2'); el.classList.add('phase-3'); }
+                        else if (newPhase === 4) { el.src = IMAGES.egg_dead; el.classList.remove('phase-2','phase-3'); }
+                    }
+                }
+
+                spawnParticle(row, col) {
+                    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                    if (!cell) return;
+                    const particle = document.createElement('img');
+                    particle.src = IMAGES.particle;
+                    particle.className = 'particle';
+                    const offsetX = (Math.random() - 0.5) * 30;
+                    const offsetY = (Math.random() - 0.5) * 30;
+                    particle.style.left = `calc(50% + ${offsetX}px)`;
+                    particle.style.top = `calc(50% + ${offsetY}px)`;
+                    particle.style.setProperty('--tx', (Math.random() - 0.5) * 80 + 'px');
+                    particle.style.setProperty('--ty', (Math.random() - 0.5) * 80 - 30 + 'px');
+                    cell.appendChild(particle);
+                    setTimeout(() => { if (particle.parentNode) particle.remove(); }, 800);
+                }
+
+                updateSunDisplay() {
+                    document.getElementById('sunCount').textContent = this.sunCount;
+                    this.updateSeedButtons();
+                }
+
+                flashElement(element, className, duration = 300) {
+                    if (!element) return;
+                    element.classList.add(className);
+                    setTimeout(() => element.classList.remove(className), duration);
+                }
+
+                spawnSun() {
+                    if (!this.gameRunning) return;
+                    const row = Math.floor(Math.random() * this.rows);
+                    const col = Math.floor(Math.random() * (this.cols - 1));
+                    const sun = document.createElement('img');
+                    sun.src = IMAGES.sun;
+                    sun.className = 'sun';
+                    const rowElement = document.querySelector(`.row[data-row="${row}"]`);
+                    const sunX = col * this.cellWidth + this.cellWidth / 2 - 20;
+                    sun.style.left = `${sunX}px`;
+                    sun.style.top = '-50px';
+                    sun.style.cursor = 'pointer';
+                    sun.addEventListener('click', (e) => { e.stopPropagation(); this.collectSun(sun); });
+                    rowElement.appendChild(sun);
+                    this.suns.push(sun);
+
+                    let y = -50;
+                    const fallInterval = setInterval(() => {
+                        if (!this.gameRunning) { clearInterval(fallInterval); return; }
+                        y += 3;
+                        sun.style.top = `${y}px`;
+                        if (y >= row * this.cellHeight + this.cellHeight / 2 - 20) {
+                            clearInterval(fallInterval);
+                            setTimeout(() => {
+                                if (sun.parentNode) {
+                                    sun.classList.add('sun-fade-out');
+                                    setTimeout(() => { if (sun.parentNode) sun.remove(); }, 500);
+                                }
+                            }, 10000);
+                        }
+                    }, 30);
+                    this.intervals.push(fallInterval);
+                }
+
+                spawnSunFromPlant(row, col) {
+                    if (!this.gameRunning) return;
+                    const plantData = this.plants[row][col];
+                    if (!plantData || plantData.type !== 'sunflower') return;
+                    plantData.element.classList.add('sun-flash');
+                    setTimeout(() => {
+                        if (!this.gameRunning || !plantData.element.parentNode) return;
+                        const sun = document.createElement('img');
+                        sun.src = IMAGES.sun;
+                        sun.className = 'sun';
+                        const plantRect = plantData.element.getBoundingClientRect();
+                        const rowElement = document.querySelector(`.row[data-row="${row}"]`);
+                        const rowRect = rowElement.getBoundingClientRect();
+                        const sunX = plantRect.left - rowRect.left + plantRect.width / 2 - 30;
+                        const sunY = plantRect.top - rowRect.top + plantRect.height / 2 - 30;
+                        sun.style.left = `${sunX}px`;
+                        sun.style.top = `${sunY}px`;
+                        sun.style.cursor = 'pointer';
+                        sun.addEventListener('click', (e) => { e.stopPropagation(); this.collectSun(sun); });
+                        rowElement.appendChild(sun);
+                        this.suns.push(sun);
+                        setTimeout(() => { if (sun.parentNode) { sun.classList.add('sun-fade-out'); setTimeout(()=>{ if(sun.parentNode) sun.remove(); },500);} }, 2000);
+                    }, 1500);
+                    setTimeout(() => { if(plantData.element) plantData.element.classList.remove('sun-flash'); }, 1500);
+                }
+
+                collectSun(sunElement) {
+                    if (!this.gameRunning || !sunElement.parentNode) return;
+                    this.sunCount += 25;
+                    this.updateSunDisplay();
+                    this.audioManager.playSound('sunPickup');
+                    sunElement.remove();
+                    const index = this.suns.indexOf(sunElement);
+                    if (index > -1) this.suns.splice(index, 1);
+                }
+
+                spawnZombie() {
+                    if (!this.gameRunning) return;
+                    this.zombieCounter++;
+                    const row = Math.floor(Math.random() * this.rows);
+                    const zombie = document.createElement('img');
+                    zombie.src = IMAGES.zombie;
+                    zombie.className = 'zombie';
+                    const rowElement = document.querySelector(`.row[data-row="${row}"]`);
+                    const rowWidth = rowElement.getBoundingClientRect().width;
+                    zombie.style.left = `${rowWidth + 50}px`;
+                    zombie.style.top = `${this.cellHeight / 2 - 57}px`;
+                    rowElement.appendChild(zombie);
+                    const zombieObj = { id: Date.now() + Math.random(), row, x: rowWidth + 50, hp: 200, element: zombie, alive: true, speed: 0.7, eating: false, damageInterval: null, eatingPlantCol: -1 };
+                    this.zombies.push(zombieObj);
+                    this.moveZombie(zombieObj);
+                }
+
+                moveZombie(zombie) {
+                    if (!zombie.alive || !this.gameRunning) return;
+                    const interval = setInterval(() => {
+                        if (!zombie.alive || !this.gameRunning) { clearInterval(interval); return; }
+                        let hasPlant = false;
+                        for (let c = 0; c < this.cols; c++) {
+                            if (this.plants[zombie.row][c]) {
+                                const plantX = c * this.cellWidth;
+                                const zombieHitbox = { left: zombie.x, right: zombie.x + 90, top: 20, bottom: 95 };
+                                if (zombieHitbox.right > plantX && zombieHitbox.left < plantX + this.cellWidth) {
+                                    hasPlant = true;
+                                    if (!zombie.eating) {
+                                        zombie.eating = true;
+                                        zombie.eatingPlantCol = c;
+                                        zombie.element.src = IMAGES.zombie_eat;
+                                        this.startEating(zombie, c);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasPlant) {
+                            if (zombie.eating) {
+                                zombie.eating = false;
+                                zombie.eatingPlantCol = -1;
+                                if (zombie.damageInterval) clearInterval(zombie.damageInterval);
+                                zombie.element.src = IMAGES.zombie;
+                            }
+                            zombie.x -= zombie.speed;
+                            zombie.element.style.left = `${zombie.x}px`;
+                        }
+                        if (zombie.x < 60) {
+                            this.activateMower(zombie.row);
+                            zombie.alive = false;
+                            zombie.element.remove();
+                            const index = this.zombies.indexOf(zombie);
+                            if (index > -1) this.zombies.splice(index, 1);
+                            clearInterval(interval);
+                        }
+                    }, 50);
+                    this.intervals.push(interval);
+                }
+
+                startEating(zombie, plantCol) {
+                    if (zombie.damageInterval) clearInterval(zombie.damageInterval);
+                    zombie.damageInterval = setInterval(() => {
+                        if (!zombie.alive || !this.gameRunning) { clearInterval(zombie.damageInterval); return; }
+                        if (this.plants[zombie.row][plantCol]) {
+                            this.audioManager.playChomp();
+                            const plant = this.plants[zombie.row][plantCol];
+                            let damage = 25;
+                            if (plant.type === 'egg') damage = 50;
+                            plant.hp -= damage;
+                            if (plant.type === 'egg') {
+                                this.updateEggPhase(plant, zombie.row, plantCol);
+                                this.spawnParticle(zombie.row, plantCol);
+                            } else {
+                                this.flashElement(plant.element, 'flash-white', 300);
+                            }
+                            if (plant.hp <= 0) {
+                                if (plant.type === 'egg') {
+                                    this.updateEggPhase(plant, zombie.row, plantCol);
+                                    setTimeout(() => {
+                                        if (plant.element.parentNode) plant.element.remove();
+                                        this.plants[zombie.row][plantCol] = null;
+                                        document.querySelector(`.cell[data-row="${zombie.row}"][data-col="${plantCol}"]`).classList.remove('occupied');
+                                    }, 500);
+                                } else {
+                                    plant.element.remove();
+                                    this.plants[zombie.row][plantCol] = null;
+                                    document.querySelector(`.cell[data-row="${zombie.row}"][data-col="${plantCol}"]`).classList.remove('occupied');
+                                }
+                                zombie.eating = false;
+                                zombie.eatingPlantCol = -1;
+                                clearInterval(zombie.damageInterval);
+                                zombie.element.src = IMAGES.zombie;
+                            }
+                        } else {
+                            zombie.eating = false;
+                            zombie.eatingPlantCol = -1;
+                            clearInterval(zombie.damageInterval);
+                            zombie.element.src = IMAGES.zombie;
+                        }
+                    }, 1000);
+                    this.intervals.push(zombie.damageInterval);
+                }
+
+                activateMower(row) {
+                    const mower = this.mowers.find(m => m.row === row);
+                    if (!mower || mower.active) return;
+                    mower.active = true;
+                    let x = -15;
+                    const interval = setInterval(() => {
+                        if (!this.gameRunning) { clearInterval(interval); return; }
+                        x += 10;
+                        mower.element.style.left = `${x}px`;
+                        this.zombies.forEach(zombie => {
+                            if (zombie.row === row && zombie.alive) {
+                                if (Math.abs(x - zombie.x) < 40) {
+                                    this.flashElement(zombie.element, 'flash-white', 300);
+                                    zombie.hp -= 200;
+                                    if (zombie.hp <= 0) {
+                                        zombie.alive = false;
+                                        zombie.element.remove();
+                                        if (zombie.damageInterval) clearInterval(zombie.damageInterval);
+                                    }
+                                }
+                            }
+                        });
+                        if (x > 1300) {
+                            clearInterval(interval);
+                            mower.active = false;
+                            mower.element.style.left = '-15px';
+                        }
+                    }, 50);
+                    this.intervals.push(interval);
+                }
+
+                shootProjectile(row, col) {
+                    if (!this.gameRunning) return;
+                    const plantData = this.plants[row][col];
+                    if (!plantData) return;
+                    const originalSrc = plantData.originalSrc || IMAGES.peashooter;
+                    plantData.element.src = IMAGES.peashooter_shoot;
+                    plantData.element.onerror = function() { this.src = IMAGES.peashooter_fallback; };
+                    setTimeout(() => {
+                        if (plantData.element.parentNode) {
+                            plantData.element.src = originalSrc;
+                            plantData.element.onerror = function() { this.src = IMAGES.peashooter_fallback; };
+                        }
+                    }, 1030);
+
+                    setTimeout(() => {
+                        if (!this.gameRunning) return;
+                        const projectile = document.createElement('img');
+                        projectile.src = IMAGES.projectile;
+                        projectile.className = 'projectile';
+                        const centerX = col * this.cellWidth + this.cellWidth / 2 + 10;
+                        const centerY = this.cellHeight / 2;
+                        projectile.style.left = `${centerX}px`;
+                        projectile.style.top = `${centerY - 14}px`;
+                        const rowElement = document.querySelector(`.row[data-row="${row}"]`);
+                        rowElement.appendChild(projectile);
+                        const projectileObj = { row, x: centerX, element: projectile, active: true };
+                        this.projectiles.push(projectileObj);
+
+                        const interval = setInterval(() => {
+                            if (!projectileObj.active || !this.gameRunning) { clearInterval(interval); return; }
+                            projectileObj.x += 8;
+                            projectileObj.element.style.left = `${projectileObj.x}px`;
+                            this.zombies.forEach(zombie => {
+                                if (zombie.row === row && zombie.alive && Math.abs(projectileObj.x - zombie.x) < 30) {
+                                    zombie.hp -= 20;
+                                    projectileObj.active = false;
+                                    projectileObj.element.remove();
+                                    this.audioManager.playSound('hit');
+                                    this.flashElement(zombie.element, 'flash-white', 300);
+                                    if (zombie.hp <= 0) {
+                                        zombie.alive = false;
+                                        zombie.element.remove();
+                                        if (zombie.damageInterval) clearInterval(zombie.damageInterval);
+                                    }
+                                }
+                            });
+                            if (projectileObj.x > 1300) {
+                                projectileObj.active = false;
+                                projectileObj.element.remove();
+                                clearInterval(interval);
+                            }
+                        }, 30);
+                        this.intervals.push(interval);
+                    }, 500);
+                }
+
+                checkPeashooters() {
+                    const now = Date.now();
+                    for (let r = 0; r < this.rows; r++) {
+                        let hasZombie = this.zombies.some(z => z.row === r && z.alive);
+                        if (hasZombie) {
+                            for (let c = 0; c < this.cols; c++) {
+                                if (this.plants[r][c] && this.plants[r][c].type === 'peashooter') {
+                                    if (now - this.plants[r][c].lastShot >= 1500) {
+                                        this.plants[r][c].lastShot = now;
+                                        this.shootProjectile(r, c);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                checkSunflowers() {
+                    const now = Date.now();
+                    for (let r = 0; r < this.rows; r++) {
+                        for (let c = 0; c < this.cols; c++) {
+                            const plant = this.plants[r][c];
+                            if (plant && plant.type === 'sunflower') {
+                                if (!plant.firstSunDone) {
+                                    if (now - plant.lastSun >= plant.firstSunDelay) {
+                                        plant.firstSunDone = true;
+                                        plant.lastSun = now;
+                                        this.spawnSunFromPlant(r, c);
+                                    }
+                                } else if (now - plant.lastSun >= 24000) {
+                                    plant.lastSun = now;
+                                    this.spawnSunFromPlant(r, c);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                startGame() {
+                    this.gameRunning = true;
+                    this.gameStartTime = Date.now();
+                    const zombieInterval = setInterval(() => {
+                        if (this.gameRunning && Date.now() - this.gameStartTime >= 20000) {
+                            this.spawnZombie();
+                            if (this.zombieCounter % 10 === 0) this.waveNumber++;
+                        }
+                    }, 8000);
+                    this.intervals.push(zombieInterval);
+
+                    const firstZombieTimeout = setTimeout(() => { if (this.gameRunning) this.spawnZombie(); }, 20000);
+                    this.timeouts.push(firstZombieTimeout);
+
+                    const sunInterval = setInterval(() => { if (this.gameRunning) this.spawnSun(); }, 5000);
+                    this.intervals.push(sunInterval);
+
+                    const gameLoop = setInterval(() => {
+                        if (!this.gameRunning) return;
+                        this.checkPeashooters();
+                        this.checkSunflowers();
+                    }, 100);
+                    this.intervals.push(gameLoop);
+                }
+            }
+
+            window.addEventListener('load', () => {
+                const game = new Game();
+                window.__game = game;
+            });
+        })();
+    </script>
+</body>
+</html>
