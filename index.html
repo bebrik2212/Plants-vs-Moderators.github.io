@@ -11,6 +11,7 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            cursor: none !important;
         }
 
         body {
@@ -26,6 +27,7 @@
             padding: 0;
             position: fixed;
             inset: 0;
+            cursor: none !important;
         }
 
         .game-container {
@@ -42,6 +44,7 @@
             transform-origin: center center;
             transform: scale(var(--game-scale, 1));
             flex-shrink: 0;
+            cursor: none !important;
         }
 
         .splash-screen {
@@ -54,6 +57,7 @@
             justify-content: center;
             transition: opacity 0.8s ease;
             pointer-events: none;
+            cursor: none !important;
         }
         .splash-screen.hidden {
             opacity: 0;
@@ -73,6 +77,7 @@
             align-items: center;
             justify-content: center;
             transition: none;
+            cursor: none !important;
         }
         .menu-overlay.hidden {
             opacity: 0;
@@ -106,7 +111,7 @@
         .start-btn {
             width: 220px;
             max-width: 220px;
-            cursor: pointer;
+            cursor: none !important;
             transition: transform 0.15s ease;
             image-rendering: auto;
             border: none;
@@ -129,7 +134,7 @@
             z-index: 3000;
             width: 44px;
             height: 44px;
-            cursor: pointer;
+            cursor: none !important;
             background: rgba(0,0,0,0.5);
             border: 2px solid rgba(255,255,255,0.3);
             border-radius: 50%;
@@ -252,7 +257,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            cursor: pointer;
+            cursor: none !important;
             background: linear-gradient(135deg, #e9e0b5 0%, #cfc28b 50%, #a99a65 100%);
             border: 2px solid #301a0c;
             border-radius: 3px;
@@ -338,7 +343,7 @@
             align-items: center;
             justify-content: center;
             position: relative;
-            cursor: pointer;
+            cursor: none !important;
             min-height: 0;
             transition: filter 0.15s;
             background-size: cover;
@@ -351,7 +356,7 @@
             z-index: 1;
         }
         .cell.occupied {
-            cursor: not-allowed;
+            cursor: none !important;
             filter: none;
         }
 
@@ -425,7 +430,7 @@
             width: 40px;
             height: 40px;
             z-index: 12;
-            cursor: pointer;
+            cursor: none !important;
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
             pointer-events: auto;
             transition: transform 0.15s, opacity 0.5s ease;
@@ -469,9 +474,33 @@
             0% { opacity: 1; transform: scale(1); }
             100% { opacity: 0; transform: scale(0.5); }
         }
+
+        #custom-cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999999;
+            width: 32px;
+            height: 32px;
+            background-image: url('курсор.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s ease;
+            cursor: none !important;
+        }
+        #custom-cursor.clicking {
+            background-image: url('курсор нажать.png');
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+        #custom-cursor.hovering {
+            transform: translate(-50%, -50%) scale(1.1);
+            filter: brightness(1.2);
+        }
     </style>
 </head>
 <body>
+    <div id="custom-cursor"></div>
     <div class="game-container" id="gameContainer">
         <div class="music-toggle" id="musicToggle" title="Вкл/Выкл музыку">
             <img id="musicIcon" src="yes.png" alt="Music On">
@@ -500,7 +529,7 @@
                     <span class="cost">50</span>
                 </div>
                 <div class="seed" id="seedPeashooter" title="Горохострел - 100 солнц">
-                    <div class="seed-image"><img src=https://fortport.ru/photo/55462" alt="Горохострел"></div>
+                    <div class="seed-image"><img src="https://fortport.ru/photo/55462" alt="Горохострел"></div>
                     <span class="cost">100</span>
                 </div>
                 <div class="seed" id="seedEgg" title="Анонимное Яйцо - 50 солнц">
@@ -642,6 +671,7 @@
                     this.cellHeight = 0;
                     this.gameStartTime = 0;
                     this.gameContainer = document.getElementById('gameContainer');
+                    this.customCursor = document.getElementById('custom-cursor');
 
                     this.adjustScale();
                     window.addEventListener('resize', () => this.adjustScale());
@@ -649,6 +679,7 @@
                     this.init();
                     this.setupSplashAndMenu();
                     this.setupMusicToggle();
+                    this.setupCustomCursor();
                 }
 
                 adjustScale() {
@@ -690,6 +721,44 @@
                         menu.classList.add('hidden');
                         this.startGame();
                         this.audioManager.playBackground();
+                    });
+                }
+
+                setupCustomCursor() {
+                    const cursor = this.customCursor;
+                    document.addEventListener('mousemove', (e) => {
+                        cursor.style.left = e.clientX + 'px';
+                        cursor.style.top = e.clientY + 'px';
+                    });
+
+                    document.addEventListener('mousedown', () => {
+                        cursor.classList.add('clicking');
+                    });
+                    
+                    document.addEventListener('mouseup', () => {
+                        cursor.classList.remove('clicking');
+                    });
+
+                    document.addEventListener('mouseleave', () => {
+                        cursor.style.display = 'none';
+                    });
+                    
+                    document.addEventListener('mouseenter', () => {
+                        cursor.style.display = 'block';
+                    });
+
+                    const clickableElements = 'a, button, input, select, textarea, [onclick], [role="button"], label, .seed, .cell, .sun, .start-btn, .music-toggle';
+                    
+                    document.addEventListener('mouseover', (e) => {
+                        if (e.target.closest(clickableElements)) {
+                            cursor.classList.add('hovering');
+                        }
+                    });
+                    
+                    document.addEventListener('mouseout', (e) => {
+                        if (e.target.closest(clickableElements)) {
+                            cursor.classList.remove('hovering');
+                        }
                     });
                 }
 
@@ -894,7 +963,7 @@
                     const sunX = col * this.cellWidth + this.cellWidth / 2 - 20;
                     sun.style.left = `${sunX}px`;
                     sun.style.top = '-50px';
-                    sun.style.cursor = 'pointer';
+                    sun.style.cursor = 'none';
                     sun.addEventListener('click', (e) => { e.stopPropagation(); this.collectSun(sun); });
                     rowElement.appendChild(sun);
                     this.suns.push(sun);
@@ -934,7 +1003,7 @@
                         const sunY = plantRect.top - rowRect.top + plantRect.height / 2 - 30;
                         sun.style.left = `${sunX}px`;
                         sun.style.top = `${sunY}px`;
-                        sun.style.cursor = 'pointer';
+                        sun.style.cursor = 'none';
                         sun.addEventListener('click', (e) => { e.stopPropagation(); this.collectSun(sun); });
                         rowElement.appendChild(sun);
                         this.suns.push(sun);
