@@ -1362,6 +1362,10 @@
                     ];
                     for (const off of offsets) {
                         if (!this.gameRunning || !zombie.alive) return;
+
+                        if (off.dy < 0 && zombie.row === 0) continue;
+                        if (off.dy > 0 && zombie.row === this.rows - 1) continue;
+
                         const helperX = zombie.x + off.dx;
                         const helperYBase = this.cellHeight / 2 - 57;
                         const helperY = helperYBase + off.dy;
