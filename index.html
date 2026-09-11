@@ -1273,6 +1273,7 @@
                                     if (zombie.alive && this.gameRunning) {
                                         this.summonHelpers(zombie);
                                         zombie.isSummoning = false;
+                                        zombie.element.classList.remove('hawaiian-idle-small');
                                         zombie.element.src = zombie.eating ? IMAGES.hawaiian_zombie_eat : IMAGES.hawaiian_zombie;
                                     }
                                 }, 1500);
@@ -1357,14 +1358,11 @@
                     const offsets = [
                         { dx: -80, dy: 0 },
                         { dx: 80, dy: 0 },
-                        { dx: 0, dy: -70 },
-                        { dx: 0, dy: 70 }
+                        { dx: 0, dy: 0 },
+                        { dx: 0, dy: 0 }
                     ];
                     for (const off of offsets) {
                         if (!this.gameRunning || !zombie.alive) return;
-
-                        if (off.dy < 0 && zombie.row === 0) continue;
-                        if (off.dy > 0 && zombie.row === this.rows - 1) continue;
 
                         const helperX = zombie.x + off.dx;
                         const helperYBase = this.cellHeight / 2 - 57;
