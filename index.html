@@ -418,10 +418,10 @@
         }
 
         .zombie.helper-zombie {
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) brightness(0) grayscale(1);
         }
         .zombie.helper-zombie.flash-white {
-            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
+            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3)) brightness(0) grayscale(1);
         }
 
         .projectile {
@@ -560,35 +560,6 @@
             opacity: 1;
         }
 
-        .hawaiian-spotlight {
-            position: absolute;
-            width: 330px;
-            height: 430px;
-            left: 0;
-            top: 0;
-            pointer-events: none;
-            z-index: 8;
-            opacity: 0;
-            transform: translate(-50%, -50%) rotate(-4deg);
-            transform-origin: center center;
-            background:
-                radial-gradient(
-                    ellipse at center,
-                    rgba(255,255,255,0.24) 0%,
-                    rgba(210,235,255,0.16) 22%,
-                    rgba(120,180,255,0.08) 42%,
-                    rgba(30,70,130,0.025) 62%,
-                    transparent 76%
-                );
-            filter: blur(3px);
-            transition: opacity 0.4s ease;
-        }
-
-        .hawaiian-spotlight.active {
-            opacity: 1;
-        }
-
-        /* Мягкое свечение вокруг самого гавайского */
         .zombie.hawaiian-lit {
             filter:
                 drop-shadow(0 0 5px rgba(180,220,255,0.75))
@@ -647,7 +618,6 @@
 
         <div class="hawaiian-blue-overlay" id="hawaiianBlueOverlay"></div>
         <div class="hawaiian-stage-effect" id="hawaiianStageEffect"></div>
-        <div class="hawaiian-spotlight" id="hawaiianSpotlight"></div>
 
         <div class="lawn-container">
             <div class="lawn" id="lawn"></div>
@@ -797,8 +767,8 @@
                     this.customCursor = document.getElementById('custom-cursor');
                     this.hawaiianBlueOverlay = document.getElementById('hawaiianBlueOverlay');
                     this.hawaiianStageEffect = document.getElementById('hawaiianStageEffect');
-                    this.hawaiianSpotlight = document.getElementById('hawaiianSpotlight');
                     this.hawaiianZombies = new Set();
+                    this.activeHawaiianCount = 0;
 
                     this.adjustScale();
                     window.addEventListener('resize', () => this.adjustScale());
@@ -1158,9 +1128,8 @@
 
                     this.hawaiianBlueOverlay.classList.add('active');
                     this.hawaiianStageEffect.classList.add('active');
-                    this.hawaiianSpotlight.classList.add('active');
 
-                    this.updateHawaiianSpotlight(zombie);
+                    this.updateHawaiianLight(zombie);
                 }
 
                 removeHawaiianEffect(zombie) {
@@ -1171,11 +1140,10 @@
                     if (this.hawaiianZombies.size === 0) {
                         this.hawaiianBlueOverlay.classList.remove('active');
                         this.hawaiianStageEffect.classList.remove('active');
-                        this.hawaiianSpotlight.classList.remove('active');
                     }
                 }
 
-                updateHawaiianSpotlight(zombie) {
+                updateHawaiianLight(zombie) {
                     if (!zombie || !zombie.element || !zombie.element.parentNode) return;
 
                     const containerRect = this.gameContainer.getBoundingClientRect();
@@ -1191,9 +1159,6 @@
 
                     const x = zombieCenterX / scale;
                     const y = zombieCenterY / scale;
-
-                    this.hawaiianSpotlight.style.left = `${x}px`;
-                    this.hawaiianSpotlight.style.top = `${y}px`;
 
                     this.hawaiianStageEffect.style.setProperty(
                         '--hawaiian-light-x',
@@ -1211,7 +1176,7 @@
                     this.zombieCounter++;
                     const row = Math.floor(Math.random() * this.rows);
                     let isConeZombie = Math.random() < 0.3;
-                    let isHawaiianZombie = Math.random() < 0.07;
+                    let isHawaiianZombie = Math.random() < 0.02 && this.activeHawaiianCount === 0;
                     const zombie = document.createElement('img');
                     let zombieType = 'normal';
                     if (isHawaiianZombie) {
@@ -1257,6 +1222,7 @@
                     this.zombies.push(zombieObj);
 
                     if (zombieType === 'hawaiian') {
+                        this.activeHawaiianCount++;
                         zombie.classList.add('hawaiian-lit');
 
                         requestAnimationFrame(() => {
@@ -1353,7 +1319,7 @@
                             zombie.element.style.left = `${zombie.x}px`;
 
                             if (zombie.type === 'hawaiian') {
-                                this.updateHawaiianSpotlight(zombie);
+                                this.updateHawaiianLight(zombie);
                             }
                         }
                         if (zombie.x < 60) {
@@ -1361,6 +1327,7 @@
 
                             if (zombie.type === 'hawaiian') {
                                 this.removeHawaiianEffect(zombie);
+                                this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
                             }
 
                             zombie.alive = false;
@@ -1393,8 +1360,8 @@
                         setTimeout(() => { if (effect.parentNode) effect.remove(); }, 1000);
 
                         const helper = document.createElement('img');
-                        helper.src = IMAGES.zombie;
-                        helper.className = 'zombie helper-zombie';
+                        helper.src = IMAGES.hawaiian_zombie;
+                        helper.className = 'zombie helper-zombie hawaiian-large';
                         helper.style.left = `${helperX}px`;
                         helper.style.top = `${this.cellHeight / 2 - 57}px`;
                         rowElement.appendChild(helper);
@@ -1415,7 +1382,10 @@
                             coneMaxHp: 0,
                             coneIntact: false,
                             isReversing: false,
-                            reverseTimer: 0
+                            reverseTimer: 0,
+                            isSummoning: false,
+                            summonTimer: 0,
+                            lastSummonTime: Date.now()
                         };
                         this.zombies.push(helperObj);
                         this.moveZombie(helperObj);
@@ -1499,6 +1469,7 @@
                                     if (zombie.hp <= 0) {
                                         if (zombie.type === 'hawaiian') {
                                             this.removeHawaiianEffect(zombie);
+                                            this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
                                         }
                                         zombie.alive = false;
                                         zombie.element.remove();
@@ -1566,6 +1537,7 @@
                                     if (zombie.hp <= 0) {
                                         if (zombie.type === 'hawaiian') {
                                             this.removeHawaiianEffect(zombie);
+                                            this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
                                         }
 
                                         zombie.alive = false;
