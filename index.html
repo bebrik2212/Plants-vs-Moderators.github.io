@@ -418,10 +418,15 @@
         }
 
         .zombie.helper-zombie {
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) brightness(0) grayscale(1);
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) brightness(0);
         }
         .zombie.helper-zombie.flash-white {
-            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3)) brightness(0) grayscale(1);
+            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3)) brightness(0);
+        }
+
+        .zombie.hawaiian-idle-small {
+            width: 100px;
+            height: 115px;
         }
 
         .projectile {
@@ -1217,7 +1222,8 @@
                         summonTimer: 0,
                         lastSummonTime: Date.now(),
                         reverseTimer: 0,
-                        isReversing: false
+                        isReversing: false,
+                        helpers: []
                     };
                     this.zombies.push(zombieObj);
 
@@ -1245,17 +1251,22 @@
                             if (zombie.reverseTimer >= 5 && !zombie.isReversing) {
                                 zombie.reverseTimer = 0;
                                 zombie.isReversing = true;
+                                zombie.helpers.forEach(h => { if (h.alive) h.isReversing = true; });
                                 setTimeout(() => {
                                     zombie.isReversing = false;
+                                    zombie.helpers.forEach(h => { if (h.alive) h.isReversing = false; });
                                 }, 1000);
                             }
                         }
 
                         if (zombie.type === 'hawaiian' && !zombie.isSummoning) {
                             const now = Date.now();
-                            if (now - zombie.lastSummonTime >= 15000) {
+                            const aliveHelpers = zombie.helpers.filter(h => h.alive);
+                            const needSummon = aliveHelpers.length === 0 || aliveHelpers.length < zombie.helpers.length;
+                            if (now - zombie.lastSummonTime >= 15000 && needSummon) {
                                 zombie.isSummoning = true;
                                 zombie.element.src = IMAGES.hawaiian_zombie_idle;
+                                zombie.element.classList.add('hawaiian-idle-small');
                                 zombie.summonTimer = 0;
                                 zombie.lastSummonTime = now;
                                 setTimeout(() => {
@@ -1328,6 +1339,7 @@
                             if (zombie.type === 'hawaiian') {
                                 this.removeHawaiianEffect(zombie);
                                 this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
+                                zombie.helpers.forEach(h => { if (h.alive) { h.alive = false; if (h.element.parentNode) h.element.remove(); } });
                             }
 
                             zombie.alive = false;
@@ -1342,17 +1354,27 @@
 
                 summonHelpers(zombie) {
                     if (!this.gameRunning || !zombie.alive) return;
-                    for (let i = 0; i < 2; i++) {
+                    const offsets = [
+                        { dx: -80, dy: 0 },
+                        { dx: 80, dy: 0 },
+                        { dx: 0, dy: -70 },
+                        { dx: 0, dy: 70 }
+                    ];
+                    for (const off of offsets) {
                         if (!this.gameRunning || !zombie.alive) return;
-                        const helperX = zombie.x + (i === 0 ? -80 : 80);
+                        const helperX = zombie.x + off.dx;
+                        const helperYBase = this.cellHeight / 2 - 57;
+                        const helperY = helperYBase + off.dy;
                         const rowElement = document.querySelector(`.row[data-row="${zombie.row}"]`);
+                        if (!rowElement) continue;
+
                         const effect = document.createElement('img');
                         effect.src = IMAGES.helper_spawn_effect;
                         effect.style.position = 'absolute';
                         effect.style.width = '80px';
                         effect.style.height = '80px';
                         effect.style.left = `${helperX - 40}px`;
-                        effect.style.top = `${this.cellHeight / 2 - 97}px`;
+                        effect.style.top = `${helperY + 20}px`;
                         effect.style.zIndex = '20';
                         effect.style.pointerEvents = 'none';
                         effect.style.objectFit = 'contain';
@@ -1363,10 +1385,10 @@
                         helper.src = IMAGES.hawaiian_zombie;
                         helper.className = 'zombie helper-zombie hawaiian-large';
                         helper.style.left = `${helperX}px`;
-                        helper.style.top = `${this.cellHeight / 2 - 57}px`;
+                        helper.style.top = `${helperY}px`;
                         rowElement.appendChild(helper);
                         const helperObj = {
-                            id: Date.now() + Math.random() + i,
+                            id: Date.now() + Math.random() + off.dx + off.dy,
                             row: zombie.row,
                             x: helperX,
                             hp: 190,
@@ -1385,9 +1407,11 @@
                             reverseTimer: 0,
                             isSummoning: false,
                             summonTimer: 0,
-                            lastSummonTime: Date.now()
+                            lastSummonTime: Date.now(),
+                            linkedHawaiian: zombie
                         };
                         this.zombies.push(helperObj);
+                        zombie.helpers.push(helperObj);
                         this.moveZombie(helperObj);
                     }
                 }
@@ -1426,9 +1450,11 @@
                                 clearInterval(zombie.damageInterval);
                                 if (zombie.type === 'hawaiian') {
                                     zombie.element.src = IMAGES.hawaiian_zombie;
+                                } else if (zombie.type === 'helper') {
+                                    zombie.element.src = IMAGES.hawaiian_zombie;
                                 } else if (zombie.type === 'cone' && zombie.coneIntact) {
                                     zombie.element.src = IMAGES.cone_zombie;
-                                } else if (zombie.type === 'normal' || zombie.type === 'helper') {
+                                } else if (zombie.type === 'normal') {
                                     zombie.element.src = IMAGES.zombie;
                                 } else if (zombie.type === 'cone' && !zombie.coneIntact) {
                                     zombie.element.src = IMAGES.zombie;
@@ -1440,9 +1466,11 @@
                             clearInterval(zombie.damageInterval);
                             if (zombie.type === 'hawaiian') {
                                 zombie.element.src = IMAGES.hawaiian_zombie;
+                            } else if (zombie.type === 'helper') {
+                                zombie.element.src = IMAGES.hawaiian_zombie;
                             } else if (zombie.type === 'cone' && zombie.coneIntact) {
                                 zombie.element.src = IMAGES.cone_zombie;
-                            } else if (zombie.type === 'normal' || zombie.type === 'helper') {
+                            } else if (zombie.type === 'normal') {
                                 zombie.element.src = IMAGES.zombie;
                             } else if (zombie.type === 'cone' && !zombie.coneIntact) {
                                 zombie.element.src = IMAGES.zombie;
@@ -1470,6 +1498,7 @@
                                         if (zombie.type === 'hawaiian') {
                                             this.removeHawaiianEffect(zombie);
                                             this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
+                                            zombie.helpers.forEach(h => { if (h.alive) { h.alive = false; if (h.element.parentNode) h.element.remove(); } });
                                         }
                                         zombie.alive = false;
                                         zombie.element.remove();
@@ -1538,6 +1567,7 @@
                                         if (zombie.type === 'hawaiian') {
                                             this.removeHawaiianEffect(zombie);
                                             this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
+                                            zombie.helpers.forEach(h => { if (h.alive) { h.alive = false; if (h.element.parentNode) h.element.remove(); } });
                                         }
 
                                         zombie.alive = false;
