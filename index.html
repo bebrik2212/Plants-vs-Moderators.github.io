@@ -1315,7 +1315,7 @@
                                         } else if (zombie.type === 'cone' && zombie.coneIntact) {
                                             zombie.element.src = IMAGES.cone_zombie_eat;
                                         } else if (zombie.type === 'normal' || zombie.type === 'helper') {
-                                            zombie.element.src = IMAGES.zombie_eat;
+                                            zombie.element.src = IMAGES.hawaiian_zombie_eat;
                                         }
                                         this.startEating(zombie, c);
                                     }
@@ -1333,7 +1333,7 @@
                                 } else if (zombie.type === 'cone' && zombie.coneIntact) {
                                     zombie.element.src = IMAGES.cone_zombie;
                                 } else if (zombie.type === 'normal' || zombie.type === 'helper') {
-                                    zombie.element.src = IMAGES.zombie;
+                                    zombie.element.src = IMAGES.hawaiian_zombie;
                                 } else if (zombie.type === 'cone' && !zombie.coneIntact) {
                                     zombie.element.src = IMAGES.zombie;
                                 }
@@ -1371,10 +1371,10 @@
                 summonHelpers(zombie) {
                     if (!this.gameRunning || !zombie.alive) return;
                     const offsets = [
-                        { dx: -80, dy: 0 },
-                        { dx: 80, dy: 0 },
-                        { dx: 0, dy: 0 },
-                        { dx: 0, dy: 0 }
+                        { dx: -60, dy: 0 },
+                        { dx: 60, dy: 0 },
+                        { dx: -30, dy: 0 },
+                        { dx: 30, dy: 0 }
                     ];
                     for (const off of offsets) {
                         if (!this.gameRunning || !zombie.alive) return;
@@ -1388,13 +1388,14 @@
                         const effect = document.createElement('img');
                         effect.src = IMAGES.helper_spawn_effect;
                         effect.style.position = 'absolute';
-                        effect.style.width = '80px';
-                        effect.style.height = '80px';
-                        effect.style.left = `${helperX - 40}px`;
-                        effect.style.top = `${helperY + 20}px`;
+                        effect.style.width = '130px';
+                        effect.style.height = '150px';
+                        effect.style.left = `${helperX - 65}px`;
+                        effect.style.top = `${helperY - 17}px`;
                         effect.style.zIndex = '20';
                         effect.style.pointerEvents = 'none';
                         effect.style.objectFit = 'contain';
+                        effect.style.filter = 'brightness(0)';
                         rowElement.appendChild(effect);
                         setTimeout(() => { if (effect.parentNode) effect.remove(); }, 1000);
 
@@ -1408,8 +1409,8 @@
                             id: Date.now() + Math.random() + off.dx + off.dy,
                             row: zombie.row,
                             x: helperX,
-                            hp: 190,
-                            maxHp: 190,
+                            hp: 123,
+                            maxHp: 123,
                             element: helper,
                             alive: true,
                             speed: 0.7,
