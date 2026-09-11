@@ -429,6 +429,15 @@
             height: 115px;
         }
 
+        .zombie.helper-small {
+            width: 110px;
+            height: 125px;
+        }
+
+        .zombie.hawaiian-top {
+            z-index: 50 !important;
+        }
+
         .projectile {
             position: absolute;
             width: 28px;
@@ -1189,6 +1198,7 @@
                         zombie.src = IMAGES.hawaiian_zombie;
                         zombie.classList.add('hawaiian-large');
                         zombie.classList.add('hawaiian-gray');
+                        zombie.classList.add('hawaiian-top');
                     } else if (isConeZombie) {
                         zombieType = 'cone';
                         zombie.src = IMAGES.cone_zombie;
@@ -1280,16 +1290,12 @@
 
                             if (now - zombie.lastSummonTime >= 15000 && needSummon) {
                                 zombie.isSummoning = true;
-                                zombie.element.src = IMAGES.hawaiian_zombie_idle;
-                                zombie.element.classList.add('hawaiian-idle-small');
                                 zombie.summonTimer = 0;
                                 zombie.lastSummonTime = now;
                                 setTimeout(() => {
                                     if (zombie.alive && this.gameRunning) {
                                         this.summonHelpers(zombie);
                                         zombie.isSummoning = false;
-                                        zombie.element.classList.remove('hawaiian-idle-small');
-                                        zombie.element.src = zombie.eating ? IMAGES.hawaiian_zombie_eat : IMAGES.hawaiian_zombie;
                                     }
                                 }, 1500);
                             }
@@ -1388,10 +1394,10 @@
                         const effect = document.createElement('img');
                         effect.src = IMAGES.helper_spawn_effect;
                         effect.style.position = 'absolute';
-                        effect.style.width = '130px';
-                        effect.style.height = '150px';
-                        effect.style.left = `${helperX - 65}px`;
-                        effect.style.top = `${helperY - 17}px`;
+                        effect.style.width = '110px';
+                        effect.style.height = '125px';
+                        effect.style.left = `${helperX - 55}px`;
+                        effect.style.top = `${helperY - 5}px`;
                         effect.style.zIndex = '20';
                         effect.style.pointerEvents = 'none';
                         effect.style.objectFit = 'contain';
@@ -1401,7 +1407,7 @@
 
                         const helper = document.createElement('img');
                         helper.src = IMAGES.hawaiian_zombie;
-                        helper.className = 'zombie helper-zombie hawaiian-large';
+                        helper.className = 'zombie helper-zombie hawaiian-large helper-small';
                         helper.style.left = `${helperX}px`;
                         helper.style.top = `${helperY}px`;
                         rowElement.appendChild(helper);
