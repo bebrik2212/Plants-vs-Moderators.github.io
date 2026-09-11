@@ -409,6 +409,15 @@
         .zombie.hawaiian-large.flash-white {
             filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3));
         }
+
+        /* ГАВАЙСКИЙ ЗОМБИ — СЕРЫЙ */
+        .zombie.hawaiian-gray {
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
+        }
+        .zombie.hawaiian-gray.flash-white {
+            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
+        }
+
         .zombie.helper-zombie {
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
         }
@@ -1061,6 +1070,7 @@
                         zombieType = 'hawaiian';
                         zombie.src = IMAGES.hawaiian_zombie;
                         zombie.classList.add('hawaiian-large');
+                        zombie.classList.add('hawaiian-gray'); // <-- серый гавайский
                     } else if (isConeZombie) {
                         zombieType = 'cone';
                         zombie.src = IMAGES.cone_zombie;
