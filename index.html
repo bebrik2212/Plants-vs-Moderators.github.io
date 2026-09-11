@@ -1190,7 +1190,7 @@
                     this.zombieCounter++;
                     const row = Math.floor(Math.random() * this.rows);
                     let isConeZombie = Math.random() < 0.3;
-                    let isHawaiianZombie = Math.random() < 1 && this.activeHawaiianCount === 0;
+                    let isHawaiianZombie = Math.random() < 0.10 && this.activeHawaiianCount === 0;
                     const zombie = document.createElement('img');
                     let zombieType = 'normal';
                     if (isHawaiianZombie) {
@@ -1320,7 +1320,9 @@
                                             zombie.element.src = IMAGES.hawaiian_zombie_eat;
                                         } else if (zombie.type === 'cone' && zombie.coneIntact) {
                                             zombie.element.src = IMAGES.cone_zombie_eat;
-                                        } else if (zombie.type === 'normal' || zombie.type === 'helper') {
+                                        } else if (zombie.type === 'normal') {
+                                            zombie.element.src = IMAGES.zombie_eat;
+                                        } else if (zombie.type === 'helper') {
                                             zombie.element.src = IMAGES.hawaiian_zombie_eat;
                                         }
                                         this.startEating(zombie, c);
@@ -1338,7 +1340,9 @@
                                     zombie.element.src = IMAGES.hawaiian_zombie;
                                 } else if (zombie.type === 'cone' && zombie.coneIntact) {
                                     zombie.element.src = IMAGES.cone_zombie;
-                                } else if (zombie.type === 'normal' || zombie.type === 'helper') {
+                                } else if (zombie.type === 'normal') {
+                                    zombie.element.src = IMAGES.zombie;
+                                } else if (zombie.type === 'helper') {
                                     zombie.element.src = IMAGES.hawaiian_zombie;
                                 } else if (zombie.type === 'cone' && !zombie.coneIntact) {
                                     zombie.element.src = IMAGES.zombie;
