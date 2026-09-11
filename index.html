@@ -1181,7 +1181,7 @@
                     this.zombieCounter++;
                     const row = Math.floor(Math.random() * this.rows);
                     let isConeZombie = Math.random() < 0.3;
-                    let isHawaiianZombie = Math.random() < 0.10 && this.activeHawaiianCount === 0;
+                    let isHawaiianZombie = Math.random() < 0.99 && this.activeHawaiianCount === 0;
                     const zombie = document.createElement('img');
                     let zombieType = 'normal';
                     if (isHawaiianZombie) {
