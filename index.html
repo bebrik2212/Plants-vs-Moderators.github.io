@@ -404,10 +404,10 @@
         .zombie.hawaiian-large {
             width: 130px;
             height: 150px;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
         }
         .zombie.hawaiian-large.flash-white {
-            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
+            filter: brightness(2) drop-shadow(0 2px 2px rgba(0,0,0,0.3));
         }
         .zombie.helper-zombie {
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)) grayscale(1);
@@ -561,13 +561,14 @@
 
     <script>
         (function() {
+            const HAWAIIAN_ZOMBIE_WALK_URL = 'гавайский идет.gif';
+            const HAWAIIAN_ZOMBIE_EAT_URL = 'гавайский ам ам ам.gif';
+            const HAWAIIAN_ZOMBIE_IDLE_URL = 'гавайский стоит.png';
+            const HELPER_SPAWN_EFFECT_URL = 'эффект.gif';
             const ZOMBIE_WALK_URL = 'https://fortport.ru/photo/60520';
             const ZOMBIE_EAT_URL = 'https://fortport.ru/photo/60654';
             const CONE_ZOMBIE_WALK_URL = 'https://fortport.ru/photo/62569';
             const CONE_ZOMBIE_EAT_URL = 'https://fortport.ru/photo/62568';
-            const HAWAIIAN_ZOMBIE_WALK_URL = 'https://fortport.ru/photo/63273';
-            const HAWAIIAN_ZOMBIE_EAT_URL = 'https://fortport.ru/photo/63274';
-            const HAWAIIAN_ZOMBIE_IDLE_URL = 'https://fortport.ru/photo/40886';
 
             const IMAGES = {
                 sunflower: 'https://fortport.ru/photo/59322',
@@ -581,6 +582,7 @@
                 hawaiian_zombie: HAWAIIAN_ZOMBIE_WALK_URL,
                 hawaiian_zombie_eat: HAWAIIAN_ZOMBIE_EAT_URL,
                 hawaiian_zombie_idle: HAWAIIAN_ZOMBIE_IDLE_URL,
+                helper_spawn_effect: HELPER_SPAWN_EFFECT_URL,
                 projectile: 'https://fortport.ru/photo/59350',
                 mower: 'https://fortport.ru/photo/62670',
                 sun: 'https://cdn-icons-png.flaticon.com/512/2720/2720081.png',
@@ -1090,7 +1092,9 @@
                         coneIntact: zombieType === 'cone',
                         isSummoning: false,
                         summonTimer: 0,
-                        lastSummonTime: Date.now()
+                        lastSummonTime: Date.now(),
+                        reverseTimer: 0,
+                        isReversing: false
                     };
                     this.zombies.push(zombieObj);
                     this.moveZombie(zombieObj);
@@ -1100,6 +1104,17 @@
                     if (!zombie.alive || !this.gameRunning) return;
                     const interval = setInterval(() => {
                         if (!zombie.alive || !this.gameRunning) { clearInterval(interval); return; }
+
+                        if (zombie.type === 'hawaiian') {
+                            zombie.reverseTimer += 0.05;
+                            if (zombie.reverseTimer >= 5 && !zombie.isReversing) {
+                                zombie.reverseTimer = 0;
+                                zombie.isReversing = true;
+                                setTimeout(() => {
+                                    zombie.isReversing = false;
+                                }, 1000);
+                            }
+                        }
 
                         if (zombie.type === 'hawaiian' && !zombie.isSummoning) {
                             const now = Date.now();
@@ -1161,7 +1176,11 @@
                                     zombie.element.src = IMAGES.zombie;
                                 }
                             }
-                            zombie.x -= zombie.speed;
+                            if (zombie.isReversing) {
+                                zombie.x += zombie.speed;
+                            } else {
+                                zombie.x -= zombie.speed;
+                            }
                             zombie.element.style.left = `${zombie.x}px`;
                         }
                         if (zombie.x < 60) {
@@ -1180,11 +1199,25 @@
                     if (!this.gameRunning || !zombie.alive) return;
                     for (let i = 0; i < 2; i++) {
                         if (!this.gameRunning || !zombie.alive) return;
+                        const helperX = zombie.x + (i === 0 ? -80 : 80);
+                        const rowElement = document.querySelector(`.row[data-row="${zombie.row}"]`);
+                        const effect = document.createElement('img');
+                        effect.src = IMAGES.helper_spawn_effect;
+                        effect.className = 'particle';
+                        effect.style.width = '80px';
+                        effect.style.height = '80px';
+                        effect.style.position = 'absolute';
+                        effect.style.left = `${helperX - 40}px`;
+                        effect.style.top = `${this.cellHeight / 2 - 97}px`;
+                        effect.style.zIndex = '20';
+                        effect.style.animation = 'none';
+                        effect.style.pointerEvents = 'none';
+                        rowElement.appendChild(effect);
+                        setTimeout(() => { if (effect.parentNode) effect.remove(); }, 800);
+
                         const helper = document.createElement('img');
                         helper.src = IMAGES.zombie;
                         helper.className = 'zombie helper-zombie';
-                        const rowElement = document.querySelector(`.row[data-row="${zombie.row}"]`);
-                        const helperX = zombie.x + (i === 0 ? -80 : 80);
                         helper.style.left = `${helperX}px`;
                         helper.style.top = `${this.cellHeight / 2 - 57}px`;
                         rowElement.appendChild(helper);
@@ -1203,7 +1236,9 @@
                             type: 'helper',
                             coneHp: 0,
                             coneMaxHp: 0,
-                            coneIntact: false
+                            coneIntact: false,
+                            isReversing: false,
+                            reverseTimer: 0
                         };
                         this.zombies.push(helperObj);
                         this.moveZombie(helperObj);
