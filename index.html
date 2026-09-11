@@ -634,7 +634,7 @@
         (function() {
             const HAWAIIAN_ZOMBIE_WALK_URL = 'HAWAIIAN_ZOMBIE_WALK.gif';
             const HAWAIIAN_ZOMBIE_EAT_URL = 'HAWAIIAN_ZOMBIE_EAT.gif';
-            const HAWAIIAN_ZOMBIE_IDLE_URL = 'гавайский стоит.png';
+            const HAWAIIAN_ZOMBIE_IDLE_URL = 'гавайский стоит.gif';
             const HELPER_SPAWN_EFFECT_URL = 'эффект.gif';
             const ZOMBIE_WALK_URL = 'https://fortport.ru/photo/60520';
             const ZOMBIE_EAT_URL = 'https://fortport.ru/photo/60654';
@@ -1181,7 +1181,7 @@
                     this.zombieCounter++;
                     const row = Math.floor(Math.random() * this.rows);
                     let isConeZombie = Math.random() < 0.3;
-                    let isHawaiianZombie = Math.random() < 0.50 && this.activeHawaiianCount === 0;
+                    let isHawaiianZombie = Math.random() < 0.10 && this.activeHawaiianCount === 0;
                     const zombie = document.createElement('img');
                     let zombieType = 'normal';
                     if (isHawaiianZombie) {
@@ -1223,6 +1223,7 @@
                         lastSummonTime: Date.now(),
                         reverseTimer: 0,
                         isReversing: false,
+                        helperDeathTime: null,
                         helpers: []
                     };
                     this.zombies.push(zombieObj);
@@ -1262,7 +1263,21 @@
                         if (zombie.type === 'hawaiian' && !zombie.isSummoning) {
                             const now = Date.now();
                             const aliveHelpers = zombie.helpers.filter(h => h.alive);
-                            const needSummon = aliveHelpers.length === 0 || aliveHelpers.length < zombie.helpers.length;
+                            const hasDeadHelpers = zombie.helpers.some(h => !h.alive);
+                            let needSummon = false;
+
+                            if (hasDeadHelpers) {
+                                if (!zombie.helperDeathTime) {
+                                    zombie.helperDeathTime = now;
+                                }
+                                if (now - zombie.helperDeathTime >= 5000) {
+                                    needSummon = true;
+                                    zombie.helperDeathTime = null;
+                                }
+                            } else if (aliveHelpers.length === 0) {
+                                needSummon = true;
+                            }
+
                             if (now - zombie.lastSummonTime >= 15000 && needSummon) {
                                 zombie.isSummoning = true;
                                 zombie.element.src = IMAGES.hawaiian_zombie_idle;
@@ -1501,6 +1516,8 @@
                                             this.removeHawaiianEffect(zombie);
                                             this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
                                             zombie.helpers.forEach(h => { if (h.alive) { h.alive = false; if (h.element.parentNode) h.element.remove(); } });
+                                        } else if (zombie.type === 'helper' && zombie.linkedHawaiian && zombie.linkedHawaiian.alive) {
+                                            zombie.linkedHawaiian.helperDeathTime = Date.now();
                                         }
                                         zombie.alive = false;
                                         zombie.element.remove();
@@ -1570,6 +1587,8 @@
                                             this.removeHawaiianEffect(zombie);
                                             this.activeHawaiianCount = Math.max(0, this.activeHawaiianCount - 1);
                                             zombie.helpers.forEach(h => { if (h.alive) { h.alive = false; if (h.element.parentNode) h.element.remove(); } });
+                                        } else if (zombie.type === 'helper' && zombie.linkedHawaiian && zombie.linkedHawaiian.alive) {
+                                            zombie.linkedHawaiian.helperDeathTime = Date.now();
                                         }
 
                                         zombie.alive = false;
