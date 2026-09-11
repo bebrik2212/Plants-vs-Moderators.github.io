@@ -1203,17 +1203,16 @@
                         const rowElement = document.querySelector(`.row[data-row="${zombie.row}"]`);
                         const effect = document.createElement('img');
                         effect.src = IMAGES.helper_spawn_effect;
-                        effect.className = 'particle';
+                        effect.style.position = 'absolute';
                         effect.style.width = '80px';
                         effect.style.height = '80px';
-                        effect.style.position = 'absolute';
                         effect.style.left = `${helperX - 40}px`;
                         effect.style.top = `${this.cellHeight / 2 - 97}px`;
                         effect.style.zIndex = '20';
-                        effect.style.animation = 'none';
                         effect.style.pointerEvents = 'none';
+                        effect.style.objectFit = 'contain';
                         rowElement.appendChild(effect);
-                        setTimeout(() => { if (effect.parentNode) effect.remove(); }, 800);
+                        setTimeout(() => { if (effect.parentNode) effect.remove(); }, 1000);
 
                         const helper = document.createElement('img');
                         helper.src = IMAGES.zombie;
